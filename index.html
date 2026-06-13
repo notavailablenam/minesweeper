@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[REDACTED] board calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: #f1f5f9;
+            margin: 0;
+            padding: 2rem 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px -10px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0 0 0.25rem 0;
+            color: #0f172a;
+        }
+        .sub {
+            color: #475569;
+            border-left: 3px solid #3b82f6;
+            padding-left: 0.75rem;
+            margin-bottom: 1.8rem;
+            font-size: 0.9rem;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            font-weight: 500;
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+        input, select, textarea, .token-grid input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            background: #fff;
+            transition: 0.2s;
+        }
+        input:focus, select:focus, textarea:focus, .token-grid input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+        }
+        .token-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 1.5rem;
+            margin-top: 0.3rem;
+        }
+        .token-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .token-item span {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.2rem;
+        }
+        .token-item input {
+            text-align: center;
+            padding: 0.5rem;
+        }
+        .raw-toggle {
+            margin: 1rem 0 0.5rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: #2563eb;
+            display: inline-block;
+        }
+        textarea {
+            font-family: monospace;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+            margin-top: 0.5rem;
+        }
+        .checkbox-group input {
+            width: auto;
+            transform: scale(1.1);
+            margin: 0;
+        }
+        .warning-message {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 0.8rem 1rem;
+            border-radius: 1rem;
+            margin: 1rem 0;
+            color: #92400e;
+            font-size: 0.9rem;
+        }
+        button {
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 0.9rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 2rem;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        button:hover {
+            background: #1e293b;
+            transform: scale(0.98);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result-card {
+            margin-top: 2rem;
+            background: #f1f5f9;
+            border-radius: 1.5rem;
+            padding: 1.2rem;
+            border: 1px solid #e2e8f0;
+        }
+        .status {
+            font-weight: 600;
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+        .status.pending { background: #fef9c3; color: #854d0e; }
+        .status.processing { background: #bfdbfe; color: #1e40af; }
+        .status.completed { background: #bbf7d0; color: #166534; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 1rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .info-section {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+        .info-section h3 {
+            font-size: 0.95rem;
+            margin: 0 0 0.5rem 0;
+        }
+        .info-section a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+        .info-section a:hover {
+            text-decoration: underline;
+        }
+        .version-list {
+            list-style: none;
+            padding-left: 0;
+        }
+        .version-list li {
+            margin-bottom: 0.3rem;
+        }
+        hr {
+            margin: 1rem 0;
+            border: none;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer-note {
+            font-size: 0.7rem;
+            text-align: center;
+            color: #64748b;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>[REDACTED] Board Calculator</h1>
+    <div class="sub">Just input your limits and wait...</div>
+
+    <div class="form-group">
+        <label>Account link (Discord / Minesweeper.online profile) <span style="color:red;">*</span></label>
+        <input type="text" id="accountLink" placeholder="https://minesweeper.online/player/... or Discord username" required>
+    </div>
+
+    <div class="form-group">
+        <label>Send the result in DMs</label>
+        <div class="checkbox-group">
+            <input type="checkbox" id="dmCheckbox">
+            <span>Yes, DM me the board when ready</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label>Solving method</label>
+        <select id="methodSelect">
+            <option value="method1">Any valid board (with optimal sum)</option>
+            <option value="method2">Maximise mines (minimize zeros)</option>
+            <option value="method3">Maximise mines + one fully mined corner</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Your limits for tokens 1‑8</label>
+        <div class="token-grid" id="tokenGrid"></div>
+        <div style="text-align: right;">
+            <span class="raw-toggle" id="toggleRawMode">Switch to raw input</span>
+        </div>
+        <div id="rawArea" style="display: none;">
+            <textarea id="rawInput" rows="2" placeholder='Example: "1:0,2:0,3:2,4:0,5:0,6:0,7:0,8:0"'></textarea>
+        </div>
+    </div>
+
+    <!-- Warning for large sum (live) -->
+    <div id="largeSumWarning" class="warning-message" style="display: none;">
+        Amount of tokens you entered seems large, compute will be launched manually, await the results in your DMs within 24-48 hours, thanks for patience!
+    </div>
+
+    <button id="submitBtn">Submit job</button>
+
+    <div id="resultPanel" class="result-card" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Job result</strong>
+            <span id="jobStatus" class="status">pending</span>
+        </div>
+        <div id="jobOutput" style="margin-top: 1rem;">
+            <pre>Waiting for solver...</pre>
+        </div>
+    </div>
+
+    <!-- Information section: contacts & version history -->
+    <div class="info-section">
+        <h3>Something broken? Have suggestions? Contact me!</h3>
+        <p>Discord: DM <strong>@notavailablenam</strong>)<br>
+        WoM: <a href="https://minesweeper.online/player/24558280" target="_blank">minesweeper.online/player/24558280</a></p>
+        
+        <h3>Version history</h3>
+        <ul class="version-list">
+            <li><strong>v1.0</strong> (2026-06-13): Initial release, welcome!</li>
+            <li><strong>v0.1</strong> (2025-02-10): Solver was created.</li>
+        </ul>
+    </div>
+    <div class="footer-note">
+        Powered by Supabase + Raspberry Pi/my PC | Results may appear in real‑time for smaller boards
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL = "https://cvxeztcsdlszwddtgtuc.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_S065ASsMmTLJkMSqlbj5Hg_rnSGINBw";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // DOM elements
+    const accountLinkInput = document.getElementById('accountLink');
+    const dmCheckbox = document.getElementById('dmCheckbox');
+    const methodSelect = document.getElementById('methodSelect');
+    const tokenGridDiv = document.getElementById('tokenGrid');
+    const toggleRawBtn = document.getElementById('toggleRawMode');
+    const rawArea = document.getElementById('rawArea');
+    const rawInput = document.getElementById('rawInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultPanel = document.getElementById('resultPanel');
+    const jobStatusSpan = document.getElementById('jobStatus');
+    const jobOutputPre = document.querySelector('#jobOutput pre');
+    const largeSumWarningDiv = document.getElementById('largeSumWarning');
+
+    let currentJobId = null;
+    let currentChannel = null;
+    let rawMode = false;
+
+    // Helper: get sum of all token inputs (from grid OR raw)
+    function getTokenSum() {
+        if (rawMode) {
+            // parse raw input string
+            let raw = rawInput.value.trim();
+            if (!raw) return 0;
+            let cleaned = raw.replace(/=/g, ':').replace(/[;]/g, ',');
+            let sum = 0;
+            const matches = cleaned.match(/(\d+)\s*:\s*(\d+)/g);
+            if (matches) {
+                matches.forEach(pair => {
+                    const parts = pair.split(':');
+                    if (parts.length === 2) {
+                        let val = parseInt(parts[1], 10);
+                        if (!isNaN(val)) sum += val;
+                    }
+                });
+            }
+            return sum;
+        } else {
+            let sum = 0;
+            for (let i = 1; i <= 8; i++) {
+                const inp = document.getElementById(`token_${i}`);
+                if (inp) {
+                    let val = parseInt(inp.value, 10);
+                    if (!isNaN(val)) sum += val;
+                }
+            }
+            return sum;
+        }
+    }
+
+    // Update warning visibility whenever inputs change
+    function updateLargeSumWarning() {
+        const sum = getTokenSum();
+        if (sum > 70) {
+            largeSumWarningDiv.style.display = 'block';
+        } else {
+            largeSumWarningDiv.style.display = 'none';
+        }
+    }
+
+    // Build digit input fields (fixed IDs: token_1...token_8)
+    function buildDigitInputs() {
+        tokenGridDiv.innerHTML = '';
+        for (let i = 1; i <= 8; i++) {
+            const div = document.createElement('div');
+            div.className = 'token-item';
+            div.innerHTML = `
+                <span>Token ${i}</span>
+                <input type="number" id="token_${i}" min="0" value="0" step="1">
+            `;
+            tokenGridDiv.appendChild(div);
+        }
+        // Attach event listeners to update sum warning
+        for (let i = 1; i <= 8; i++) {
+            const inp = document.getElementById(`token_${i}`);
+            if (inp) inp.addEventListener('input', updateLargeSumWarning);
+        }
+    }
+
+    function getInputFromDigits() {
+        const parts = [];
+        for (let i = 1; i <= 8; i++) {
+            const inputEl = document.getElementById(`token_${i}`);
+            let val = inputEl ? parseInt(inputEl.value, 10) : 0;
+            if (isNaN(val)) val = 0;
+            parts.push(`${i}:${val}`);
+        }
+        return parts.join(',');
+    }
+
+    function isValidRawInput(str) {
+        const regex = /^\s*(\d+)\s*[:=]\s*\d+(\s*[,;]\s*\d+\s*[:=]\s*\d+)*\s*$/;
+        return regex.test(str.trim()) || (str.trim().split(',').length === 8 && str.includes(':'));
+    }
+
+    function updateInputVisibility() {
+        if (rawMode) {
+            tokenGridDiv.style.display = 'none';
+            rawArea.style.display = 'block';
+            toggleRawBtn.innerText = 'Switch to token grid';
+            if (!rawInput.value.trim()) {
+                rawInput.value = getInputFromDigits();
+            }
+            // remove grid listeners temporarily, raw mode uses its own input listener
+        } else {
+            tokenGridDiv.style.display = 'grid';
+            rawArea.style.display = 'none';
+            toggleRawBtn.innerText = 'Switch to raw input';
+            if (rawInput.value.trim() && isValidRawInput(rawInput.value)) {
+                const pairs = rawInput.value.match(/(\d+)\s*[:=]\s*(\d+)/g);
+                if (pairs) {
+                    pairs.forEach(pair => {
+                        const [k, v] = pair.split(/[:=]/).map(s => parseInt(s,10));
+                        if (k >=1 && k<=8) {
+                            const inp = document.getElementById(`token_${k}`);
+                            if(inp) inp.value = isNaN(v) ? 0 : v;
+                        }
+                    });
+                }
+            }
+        }
+        updateLargeSumWarning();
+    }
+
+    toggleRawBtn.addEventListener('click', () => {
+        rawMode = !rawMode;
+        updateInputVisibility();
+    });
+
+    // raw input live sum update
+    rawInput.addEventListener('input', updateLargeSumWarning);
+
+    function getFinalInputString() {
+        if (rawMode) {
+            let raw = rawInput.value.trim();
+            if (!raw) return getInputFromDigits();
+            let cleaned = raw.replace(/=/g, ':').replace(/[;]/g, ',');
+            if (!cleaned.match(/\d+:\d+/)) return getInputFromDigits();
+            return cleaned;
+        } else {
+            return getInputFromDigits();
+        }
+    }
+
+    function subscribeToJob(jobId) {
+        if (currentChannel) {
+            supabaseClient.removeChannel(currentChannel);
+        }
+        currentChannel = supabaseClient
+            .channel(`job-${jobId}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'jobs',
+                    filter: `id=eq.${jobId}`
+                },
+                (payload) => {
+                    const newStatus = payload.new.status;
+                    const output = payload.new.output;
+                    jobStatusSpan.innerText = newStatus;
+                    jobStatusSpan.className = `status ${newStatus}`;
+                    
+                    if (newStatus === 'completed' && output) {
+                        let displayOutput = typeof output === 'object' ? JSON.stringify(output, null, 2) : output;
+                        jobOutputPre.innerText = displayOutput;
+                        submitBtn.disabled = false;
+                    } else if (newStatus === 'error') {
+                        let errMsg = output || 'Worker reported an error.';
+                        jobOutputPre.innerText = `Error: ${errMsg}`;
+                        submitBtn.disabled = false;
+                    } else if (newStatus === 'processing') {
+                        jobOutputPre.innerText = 'Processing board with solver ...';
+                        submitBtn.disabled = true;
+                    }
+                }
+            )
+            .subscribe();
+    }
+
+    async function submitJob(method, inputString, accountLink, sendDM) {
+        if (currentChannel) {
+            supabaseClient.removeChannel(currentChannel);
+            currentChannel = null;
+        }
+        resultPanel.style.display = 'block';
+        jobStatusSpan.innerText = 'pending';
+        jobStatusSpan.className = 'status pending';
+        jobOutputPre.innerText = 'Submitting job ...';
+        
+        const enrichedInput = {
+            user_input: inputString,
+            account_link: accountLink,
+            send_dm: sendDM
+        };
+        
+        const { data, error } = await supabaseClient
+            .from('jobs')
+            .insert([
+                {
+                    method: method,
+                    input: inputString,          
+                    account_link: accountLink,
+                    send_dm: sendDM,
+                    status: 'pending'
+                }
+            ])
+            .select('id')
+            .single();
+        
+        if (error) {
+            console.error('Insert error:', error);
+            jobOutputPre.innerText = `Submission failed: ${error.message}`;
+            jobStatusSpan.innerText = 'error';
+            jobStatusSpan.className = 'status error';
+            submitBtn.disabled = false;
+            return;
+        }
+        
+        currentJobId = data.id;
+        subscribeToJob(currentJobId);
+        jobOutputPre.innerText = 'Job submitted, waiting for worker ...';
+        
+        // If sum >70, also show the manual warning (in addition to the persistent one)
+        const sum = getTokenSum();
+        if (sum > 70) {
+            // The warning already visible, but optionally we can also append a note in the result panel
+            jobOutputPre.innerText += '\n\nAmount of tokens you entered seems large, compute will be launched manually, await the results in your DMs within 24-48 hours, thanks for patience!';
+        }
+    }
+
+    submitBtn.addEventListener('click', async () => {
+        if (submitBtn.disabled) return;
+        
+        // Validate account link
+        const accountLink = accountLinkInput.value.trim();
+        if (!accountLink) {
+            alert('Please provide an account link (Discord or Minesweeper.online profile).');
+            return;
+        }
+        
+        const sendDM = dmCheckbox.checked;
+        const method = methodSelect.value;
+        let inputStr = getFinalInputString();
+        
+        if (!inputStr.trim() || !inputStr.includes(':')) {
+            alert('Please provide valid token counts (e.g., 1:2,2:0,...). Use token grid or raw mode.');
+            return;
+        }
+        
+        
+        
+        submitBtn.disabled = true;
+        await submitJob(method, inputStr, accountLink, sendDM);
+    });
+
+    // Initialize
+    buildDigitInputs();
+    updateInputVisibility();
+    rawInput.value = "1:1,2:0,3:2,4:0,5:0,6:2,7:0,8:0";
+    updateLargeSumWarning();
+</script>
+</body>
+</html>
