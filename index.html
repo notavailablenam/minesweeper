@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[REDACTED] board calculator</title>
+    <title>Elite club board calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
@@ -213,11 +213,11 @@
 </head>
 <body>
 <div class="container">
-    <h1>[REDACTED] Board Calculator</h1>
+    <h1>Elite club Board Calculator</h1>
     <div class="sub">Just input your limits and wait...</div>
 
     <div class="form-group">
-        <label>Account link (Discord / Minesweeper.online profile) <span style="color:red;">*</span></label>
+        <label>Account link (Minesweeper.online profile / id / username) <span style="color:red;">*</span></label>
         <input type="text" id="accountLink" placeholder="https://minesweeper.online/player/... or Discord username" required>
     </div>
 
@@ -274,8 +274,9 @@
         
         <h3>Version history</h3>
         <ul class="version-list">
+            <li><strong>v1.0.1</strong> (2026-07-02): Redacted -> elite club, typo fix. Backend rework is incomming, send your suggestions wile it's not too late!</li>
             <li><strong>v1.0</strong> (2026-06-13): Initial release, welcome!</li>
-            <li><strong>v0.1</strong> (2025-02-10): Solver was created.</li>
+            <li><strong>v0.1</strong> (2026-02-10): Solver was created.</li>
         </ul>
     </div>
     <div class="footer-note">
@@ -548,7 +549,7 @@
     // Initialize
     buildDigitInputs();
     updateInputVisibility();
-    rawInput.value = "1:1,2:0,3:2,4:0,5:0,6:2,7:0,8:0";
+    rawInput.value = "1:0,2:0,3:0,4:0,5:0,6:0,7:0,8:0";
     updateLargeSumWarning();
 </script>
 </body>
