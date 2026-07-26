@@ -209,10 +209,36 @@
             color: #64748b;
             margin-top: 1rem;
         }
+        .warning-input-wrap {
+            margin-bottom: 1.5rem;
+        }
+        .warning-input-wrap input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid #f59e0b;
+            border-radius: 1rem;
+            font-size: 0.95rem;
+            background: #fffbeb;
+            transition: 0.2s;
+            color: #78350f;
+        }
+        .warning-input-wrap input::placeholder {
+            color: #b45309;
+            opacity: 0.7;
+        }
+        .warning-input-wrap input:focus {
+            outline: none;
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+            background: #fff7e6;
+        }
     </style>
 </head>
 <body>
 <div class="container">
+    <div class="warning-input-wrap">
+            <input type="text" id="warningField" placeholder="⚠️ Service might be unavailable untill 3rd Aug.">
+        </div>
     <h1>Elite club Board Calculator</h1>
     <div class="sub">Just input your limits and wait...</div>
 
@@ -274,6 +300,7 @@
         
         <h3>Version history</h3>
         <ul class="version-list">
+            <li><strong>v1.0.2</strong> (2026-07-26): Warning field added, backend v2 is still comming...</li>
             <li><strong>v1.0.1</strong> (2026-07-02): Redacted -> elite club, typo fix. Backend rework is incomming, send your suggestions while it's not too late!</li>
             <li><strong>v1.0</strong> (2026-06-13): Initial release, welcome!</li>
             <li><strong>v0.1</strong> (2026-02-10): Solver was created.</li>
